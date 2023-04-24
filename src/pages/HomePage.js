@@ -1,41 +1,43 @@
 import styled from "styled-components";
 import { BiExit } from "react-icons/bi";
 import { AiOutlineMinusCircle, AiOutlinePlusCircle } from "react-icons/ai";
-import { useEffect, useState } from "react";
-import { adicionarTransacaoDeEntrada, adicionarTransacaoDeSaida,obterTransacoesDoUsuario,} from "../arquivo";
+import { adicionarTransacaoDeEntrada, adicionarTransacaoDeSaida, obterTransacoesDoUsuario } from "../arquivo";
+import { useState, useEffect } from "react";
+import { useLocation } from 'react-router-dom';
 
 export default function HomePage() {
-  const [usuario, setUsuario] = useState({});
+  const location = useLocation();
+  const token = location.state?.token;
+  const [nome, setNome] = useState("");
   const [transacoes, setTransacoes] = useState([]);
-  function calculaSaldo(transacoes) {
-    const soma = transacoes.reduce((acc, transacao) => {
-      return transacao.tipo === "entrada" ? acc + transacao.valor : acc - transacao.valor;
-    }, 0);
-    return soma.toFixed(2);
-  }
+  const [saldo, setSaldo] = useState(0);
+  const handleLogout = () => {
+  };
+  const handleNovaTransacao = () => {
+  };
   useEffect(() => {
-    async function carregarTransacoes() {
+    async function carregarInformacoesUsuario() {
       try {
-        const transacoesDoUsuario = await obterTransacoesDoUsuario(usuario.id);
+        const usuario = await obterTransacoesDoUsuario(token);
+        setNome(usuario.nome);
+        const transacoesDoUsuario = usuario.transacoes;
         setTransacoes(transacoesDoUsuario);
+        const saldoDoUsuario = transacoesDoUsuario.reduce(
+          (saldo, transacao) => saldo + transacao.valor,
+          0
+        );
+        setSaldo(saldoDoUsuario);
       } catch (error) {
-        console.log(error);
-        alert("Erro ao carregar transações.");
+        console.error(error);
       }
     }
-    if (usuario.id) {
-      carregarTransacoes();
-    }
-  }, [usuario]);
-
-  const handleLogout = () => {
-    setUsuario({});
-  };
+    carregarInformacoesUsuario();
+  }, [token]);
 
   return (
     <HomeContainer>
       <Header>
-        <h1>Olá, {usuario.nome}</h1>
+        <h1>Olá, {nome}</h1>
         <BiExit onClick={handleLogout} />
       </Header>
 
@@ -47,8 +49,8 @@ export default function HomePage() {
                 <span>{transacao.data}</span>
                 <strong>{transacao.descricao}</strong>
               </div>
-              <Value color={transacao.tipo === "saida" ? "negativo" : "positivo"}>
-                {transacao.valor}
+              <Value color={transacao.valor > 0 ? "positivo" : "negativo"}>
+                {transacao.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </Value>
             </ListItemContainer>
           ))}
@@ -56,24 +58,25 @@ export default function HomePage() {
 
         <article>
           <strong>Saldo</strong>
-          <Value color={"positivo"}>{calculaSaldo(transacoes)}</Value>
+          <Value color={saldo > 0 ? "positivo" : "negativo"}>
+            {saldo.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          </Value>
         </article>
       </TransactionsContainer>
 
       <ButtonsContainer>
-        <button>
+        <button onClick={handleNovaTransacao}>
           <AiOutlinePlusCircle />
-          <p>Nova entrada</p>
+          <p>Nova <br /> entrada</p>
         </button>
-        <button>
+        <button onClick={handleNovaTransacao}>
           <AiOutlineMinusCircle />
-          <p>Nova saída</p>
+          <p>Nova <br /> saída</p>
         </button>
       </ButtonsContainer>
     </HomeContainer>
   );
 }
-
 
 const HomeContainer = styled.div`
   display: flex;

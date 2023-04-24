@@ -57,3 +57,4 @@ export async function obterTransacoesDoUsuario(token) {
     throw error;
   }
 }
+

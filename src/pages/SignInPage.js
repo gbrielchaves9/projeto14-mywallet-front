@@ -5,7 +5,8 @@ import { fazerLogin } from "../arquivo";
 import { useState } from "react";
 
 export default function SignInPage() {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
+  const [token, setToken] = useState('');
 
   const [formData, setFormData] = useState({
     email: "",
@@ -23,10 +24,11 @@ export default function SignInPage() {
     try {
       const response = await fazerLogin(email, senha);
       console.log(response);
-      navigate("/home"); 
+      setToken(response.token);
+      navigate('/home', { state: { token: response.token } });
     } catch (error) {
       console.log(error);
-      alert("Erro ao fazer login.");
+      alert('Erro ao fazer login.');
     }
   };
 
