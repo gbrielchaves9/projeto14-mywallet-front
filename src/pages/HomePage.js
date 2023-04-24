@@ -1,55 +1,79 @@
-import styled from "styled-components"
-import { BiExit } from "react-icons/bi"
-import { AiOutlineMinusCircle, AiOutlinePlusCircle } from "react-icons/ai"
+import styled from "styled-components";
+import { BiExit } from "react-icons/bi";
+import { AiOutlineMinusCircle, AiOutlinePlusCircle } from "react-icons/ai";
+import { useEffect, useState } from "react";
+import { adicionarTransacaoDeEntrada, adicionarTransacaoDeSaida,obterTransacoesDoUsuario,} from "../arquivo";
 
 export default function HomePage() {
+  const [usuario, setUsuario] = useState({});
+  const [transacoes, setTransacoes] = useState([]);
+  function calculaSaldo(transacoes) {
+    const soma = transacoes.reduce((acc, transacao) => {
+      return transacao.tipo === "entrada" ? acc + transacao.valor : acc - transacao.valor;
+    }, 0);
+    return soma.toFixed(2);
+  }
+  useEffect(() => {
+    async function carregarTransacoes() {
+      try {
+        const transacoesDoUsuario = await obterTransacoesDoUsuario(usuario.id);
+        setTransacoes(transacoesDoUsuario);
+      } catch (error) {
+        console.log(error);
+        alert("Erro ao carregar transações.");
+      }
+    }
+    if (usuario.id) {
+      carregarTransacoes();
+    }
+  }, [usuario]);
+
+  const handleLogout = () => {
+    setUsuario({});
+  };
+
   return (
     <HomeContainer>
       <Header>
-        <h1>Olá, Fulano</h1>
-        <BiExit />
+        <h1>Olá, {usuario.nome}</h1>
+        <BiExit onClick={handleLogout} />
       </Header>
 
       <TransactionsContainer>
         <ul>
-          <ListItemContainer>
-            <div>
-              <span>30/11</span>
-              <strong>Almoço mãe</strong>
-            </div>
-            <Value color={"negativo"}>120,00</Value>
-          </ListItemContainer>
-
-          <ListItemContainer>
-            <div>
-              <span>15/11</span>
-              <strong>Salário</strong>
-            </div>
-            <Value color={"positivo"}>3000,00</Value>
-          </ListItemContainer>
+          {transacoes.map((transacao) => (
+            <ListItemContainer key={transacao.id}>
+              <div>
+                <span>{transacao.data}</span>
+                <strong>{transacao.descricao}</strong>
+              </div>
+              <Value color={transacao.tipo === "saida" ? "negativo" : "positivo"}>
+                {transacao.valor}
+              </Value>
+            </ListItemContainer>
+          ))}
         </ul>
 
         <article>
           <strong>Saldo</strong>
-          <Value color={"positivo"}>2880,00</Value>
+          <Value color={"positivo"}>{calculaSaldo(transacoes)}</Value>
         </article>
       </TransactionsContainer>
-
 
       <ButtonsContainer>
         <button>
           <AiOutlinePlusCircle />
-          <p>Nova <br /> entrada</p>
+          <p>Nova entrada</p>
         </button>
         <button>
           <AiOutlineMinusCircle />
-          <p>Nova <br />saída</p>
+          <p>Nova saída</p>
         </button>
       </ButtonsContainer>
-
     </HomeContainer>
-  )
+  );
 }
+
 
 const HomeContainer = styled.div`
   display: flex;

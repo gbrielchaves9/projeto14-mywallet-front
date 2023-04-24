@@ -1,22 +1,60 @@
-import styled from "styled-components"
-import { Link } from "react-router-dom"
-import MyWalletLogo from "../components/MyWalletLogo"
+import styled from "styled-components";
+import { Link, useNavigate } from "react-router-dom";
+import MyWalletLogo from "../components/MyWalletLogo";
+import { fazerLogin } from "../arquivo";
+import { useState } from "react";
 
 export default function SignInPage() {
+  const navigate = useNavigate(); 
+
+  const [formData, setFormData] = useState({
+    email: "",
+    senha: "",
+  });
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const { email, senha } = formData;
+    try {
+      const response = await fazerLogin(email, senha);
+      console.log(response);
+      navigate("/home"); 
+    } catch (error) {
+      console.log(error);
+      alert("Erro ao fazer login.");
+    }
+  };
+
   return (
     <SingInContainer>
-      <form>
+      <form onSubmit={handleSubmit}>
         <MyWalletLogo />
-        <input placeholder="E-mail" type="email" />
-        <input placeholder="Senha" type="password" autocomplete="new-password" />
+        <input
+          placeholder="E-mail"
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleInputChange}
+        />
+        <input
+          placeholder="Senha"
+          type="password"
+          name="senha"
+          value={formData.senha}
+          onChange={handleInputChange}
+          autoComplete="new-password"
+        />
         <button>Entrar</button>
       </form>
 
-      <Link>
-        Primeira vez? Cadastre-se!
-      </Link>
+      <Link to="/cadastro">Primeira vez? Cadastre-se!</Link>
     </SingInContainer>
-  )
+  );
 }
 
 const SingInContainer = styled.section`
