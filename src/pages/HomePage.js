@@ -4,16 +4,19 @@ import { AiOutlineMinusCircle, AiOutlinePlusCircle } from "react-icons/ai";
 import { adicionarTransacaoDeEntrada, adicionarTransacaoDeSaida, obterTransacoesDoUsuario } from "../arquivo";
 import { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
-
+import { Link, useNavigate } from "react-router-dom";
 export default function HomePage() {
   const location = useLocation();
   const token = location.state?.token;
   const [nome, setNome] = useState("");
   const [transacoes, setTransacoes] = useState([]);
   const [saldo, setSaldo] = useState(0);
+  const navigate = useNavigate();
   const handleLogout = () => {
+    navigate("/", { state: undefined });
   };
-  const handleNovaTransacao = () => {
+  const handleNovaTransacao = (tipo) => {
+    navigate(`/nova-transacao/${tipo}`, { state: { token } });
   };
   useEffect(() => {
     async function carregarInformacoesUsuario() {
@@ -22,15 +25,25 @@ export default function HomePage() {
         setNome(usuario.nome);
         const transacoesDoUsuario = usuario.transacoes;
         setTransacoes(transacoesDoUsuario);
-        const saldoDoUsuario = transacoesDoUsuario.reduce(
-          (saldo, transacao) => saldo + transacao.valor,
-          0
-        );
+
+        let totalEntrada = 0;
+        let totalSaida = 0;
+
+        transacoesDoUsuario.forEach(transacao => {
+          if (transacao.tipo === 'entrada') {
+            totalEntrada += Number(transacao.valor);
+          } else {
+            totalSaida += Number(transacao.valor);
+          }
+        });
+
+        const saldoDoUsuario = totalEntrada - totalSaida;
         setSaldo(saldoDoUsuario);
       } catch (error) {
         console.error(error);
       }
     }
+
     carregarInformacoesUsuario();
   }, [token]);
 
@@ -46,10 +59,10 @@ export default function HomePage() {
           {transacoes.map((transacao) => (
             <ListItemContainer key={transacao.id}>
               <div>
-                <span>{transacao.data}</span>
+              <span>{new Date(transacao.data).toLocaleDateString('pt-BR', { day: 'numeric', month: 'numeric' })}</span>
                 <strong>{transacao.descricao}</strong>
               </div>
-              <Value color={transacao.valor > 0 ? "positivo" : "negativo"}>
+              <Value color={transacao.tipo === "entrada" ? "positivo" : "negativo"}>
                 {transacao.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
               </Value>
             </ListItemContainer>
@@ -64,14 +77,16 @@ export default function HomePage() {
         </article>
       </TransactionsContainer>
 
+
       <ButtonsContainer>
-        <button onClick={handleNovaTransacao}>
+        <button onClick={() => handleNovaTransacao('entrada')}>
           <AiOutlinePlusCircle />
-          <p>Nova <br /> entrada</p>
+          <p>Nova entrada</p>
         </button>
-        <button onClick={handleNovaTransacao}>
+
+        <button onClick={() => handleNovaTransacao('saida')}>
           <AiOutlineMinusCircle />
-          <p>Nova <br /> saída</p>
+          <p>Nova saída</p>
         </button>
       </ButtonsContainer>
     </HomeContainer>
