@@ -9,7 +9,6 @@ export async function cadastrarUsuario(nome, email, senha) {
     return response.data;
   } catch (error) {
     console.error(error);
-    throw error;
   }
 }
 export async function fazerLogin(email, senha) {
